@@ -68,6 +68,15 @@ impl Canvas {
             self.height = col + 1;
         }
     }
+
+    /// Returns the width of the Canvas in characters.
+    pub fn get_width(&self) -> u16 {
+        self.width
+    }
+
+    /// Returns the height of the Canvas in characters.
+    pub fn get_height(&self) -> u16 {
+        self.height
     }
 
     /// Clears the canvas.
