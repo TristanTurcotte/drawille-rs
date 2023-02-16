@@ -16,9 +16,9 @@
 //!     canvas.set(5, 4);
 //!     canvas.line(2, 2, 8, 8);
 //!     assert_eq!(canvas.frame(), [
-//! " ⢄    ",
-//! "  ⠙⢄  ",
-//! "    ⠁ "].join("\n"));
+//! " ⢄   ",
+//! "  ⠙⢄ ",
+//! "    ⠁"].join("\n"));
 //! }
 //! ```
 use std::char;
