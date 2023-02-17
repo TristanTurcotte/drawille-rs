@@ -69,14 +69,46 @@ impl Canvas {
         }
     }
 
-    /// Returns the width of the Canvas in characters.
-    pub fn get_width(&self) -> u16 {
+    /// Returns the last known width of the Canvas in characters.
+    /// 
+    /// This value should be correct most of the time.
+    pub fn width(&self) -> u16 {
         self.width
     }
 
-    /// Returns the height of the Canvas in characters.
-    pub fn get_height(&self) -> u16 {
+    /// Returns the last known height of the Canvas in characters.
+    /// 
+    /// This value should be correct most of the time.
+    pub fn height(&self) -> u16 {
         self.height
+    }
+
+    /// Returns the width of the Canvas in characters.
+    /// 
+    /// Guarantees that the given width is correct as a bounds check is performed prior to
+    /// returning a value.
+    pub fn get_width(&self) -> u16 {
+        let mut max: u16 = self.width();
+        for &(x, _) in self.chars.keys() {
+            if max < x + 1 {
+                max = x + 1;
+            }
+        }
+        max // width
+    }
+
+    /// Returns the height of the Canvas in characters.
+    /// 
+    /// Guarantees that the given height is correct as a bounds check is performed prior to
+    /// returning a value.
+    pub fn get_height(&self) -> u16 {
+        let mut max: u16 = self.height();
+        for &(_, y) in self.chars.keys() {
+            if max < y + 1 {
+                max = y + 1;
+            }
+        }
+        max // height
     }
 
     /// Clears the canvas.
@@ -170,17 +202,32 @@ impl Canvas {
     }
 
     /// Returns a `Vec` of each row of the `Canvas`.
-    ///
+    /// 
     /// Note that each row is actually four pixels high due to the fact that a single Braille
     /// character spans two by four pixels.
     pub fn rows(&self) -> Vec<String> {
-        let maxrow = self.width;
-        let maxcol = self.height;
+        let min_x: u16 = 0;
+        let min_y: u16 = 0;
 
-        let mut result = Vec::with_capacity(maxcol as usize + 1);
-        for y in 0..maxcol {
-            let mut row = String::with_capacity(maxrow as usize + 1);
-            for x in 0..maxrow {
+        let max_x = self.get_width();
+        let max_y = self.get_height();
+
+        self.framed_rows(min_x, min_y, max_x, max_y)
+    }
+
+    /// Returns a `Vec` of each row of the `Canvas` which fit inside a rectangle with the given
+    /// top-left character zero-indexed position (Not pixel) of `(x, y)`, and the width and
+    /// height in characters: `x_width` and `y_height`.
+    ///
+    /// Note that each row is actually four pixels high due to the fact that a single Braille
+    /// character spans two by four pixels.
+    pub fn framed_rows(&self, min_x: u16, min_y: u16, x_width: u16, y_height: u16) -> Vec<String> {
+        let max_y = min_y + y_height;
+        let max_x = min_x + x_width;
+        let mut result = Vec::with_capacity(y_height as usize + 1);
+        for y in min_y..max_y {
+            let mut row = String::with_capacity(x_width as usize + 1);
+            for x in min_x..max_x {
                 let cell =
                     self.chars
                         .get(&(x, y))
@@ -204,9 +251,18 @@ impl Canvas {
         result
     }
 
-    /// Draws the canvas to a `String` and returns it.
+    /// Draws the entire canvas to a `String` and returns it.
     pub fn frame(&self) -> String {
         self.rows().join("\n")
+    }
+
+    /// Draws a selected `frame` of the canvas to a `String` and returns it.
+    /// 
+    /// The frame's top left character coordinate is the given `min_x` and `min_y` with a width of
+    /// `char_width` and a height of `char_height`.
+    pub fn selected_frame(&self, min_x: u16, min_y: u16, char_width: u16, char_height: u16) -> String {
+        self.framed_rows(min_x, min_y, char_width, char_height)
+            .join("\n")
     }
 
     /// Draws a line from `(x1, y1)` to `(x2, y2)` onto the `Canvas`.
@@ -392,6 +448,11 @@ impl Turtle {
     /// Writes the `Turtle`’s `Canvas` to a `String` and returns it.
     pub fn frame(&self) -> String {
         self.cvs.frame()
+    }
+
+    /// Writes a `frame` of the `Turtle`’s `Canvas` to a `String` and returns it.
+    pub fn selected_frame(&self, min_x: u16, min_y: u16, char_width: u16, char_height: u16) -> String {
+        self.cvs.selected_frame(min_x, min_y, char_width, char_height)
     }
 }
 
